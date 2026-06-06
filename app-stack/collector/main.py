@@ -45,6 +45,17 @@ def validate_telemetry(data):
             return False
     return True
 
+def fetch_inverter_data():
+    """Synchronously fetch data from the inverter."""
+    client = GivEnergyClient(host=INVERTER_IP)
+    data = client.update()
+    return {
+        'p_pv_start': data.p_pv(0),
+        'p_battery': data.p_battery,
+        'p_grid_out': data.p_grid_out,
+        'soc': data.soc
+    }
+
 async def main():
     """Main async loop for polling inverter and writing to InfluxDB."""
     # Setup InfluxDB client
@@ -55,28 +66,21 @@ async def main():
     )
     write_api = influx_client.write_api(write_options=ASYNCHRONOUS)
 
+    loop = asyncio.get_event_loop()
+
     while True:
         try:
-            client = GivEnergyClient(host=INVERTER_IP)
-            try:
-                data = await client.async_update()
-                telemetry = {
-                    'p_pv_start': data.p_pv(0),
-                    'p_battery': data.p_battery,
-                    'p_grid_out': data.p_grid_out,
-                    'soc': data.soc
-                }
-                
-                if validate_telemetry(telemetry):
-                    influx_data = f'inverter p_pv_start={telemetry["p_pv_start"]},p_battery={telemetry["p_battery"]},p_grid_out={telemetry["p_grid_out"]},soc={telemetry["soc"]}'
-                    await write_to_influx(write_api, influx_data)
-                else:
-                    logger.warning("Discarded invalid telemetry data")
-            finally:
-                await client.async_close()
+            # Run synchronous inverter fetch in a thread executor to avoid blocking
+            telemetry = await loop.run_in_executor(None, fetch_inverter_data)
+
+            if validate_telemetry(telemetry):
+                influx_data = f'inverter p_pv_start={telemetry["p_pv_start"]},p_battery={telemetry["p_battery"]},p_grid_out={telemetry["p_grid_out"]},soc={telemetry["soc"]}'
+                await write_to_influx(write_api, influx_data)
+            else:
+                logger.warning("Discarded invalid telemetry data")
         except Exception as e:
             logger.error(f"Modbus communication error: {e}")
-        
+
         await asyncio.sleep(5)
 
 if __name__ == "__main__":
