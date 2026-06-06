@@ -1,0 +1,19 @@
+---
+- name: Deploy solar monitoring stack
+  hosts: solar_pi
+  become: false
+
+  tasks:
+    - name: Sync application stack to target
+      synchronize:
+        src: ./app-stack/
+        dest: /opt/solar-monitoring
+        delete: yes
+        recursive: yes
+        rsync_opts:
+          - "--chown={{ ansible_user }}:{{ ansible_user }}"
+
+    - name: Start container stack
+      command: podman-compose up -d --build
+      args:
+        chdir: /opt/solar-monitoring

@@ -1,0 +1,3 @@
+givenergy-modbus
+influxdb-client
+pydantic

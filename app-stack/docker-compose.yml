@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  collector:
+    build:
+      context: ./collector
+      dockerfile: Containerfile
+    environment:
+      INVERTER_IP: ${INVERTER_IP}
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: ${INFLUX_TOKEN}
+      INFLUX_ORG: ${INFLUX_ORG}
+      INFLUX_BUCKET: ${INFLUX_BUCKET}
+    depends_on:
+      - influxdb
+    networks:
+      - solar-net
+
+  influxdb:
+    image: influxdb:2.7
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_USER}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN}
+    ports:
+      - "8086:8086"
+    networks:
+      - solar-net
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    ports:
+      - "3000:3000"
+    networks:
+      - solar-net
+
+volumes:
+  influxdb-data:
+  grafana-data:
+
+networks:
+  solar-net:
+    driver: bridge
