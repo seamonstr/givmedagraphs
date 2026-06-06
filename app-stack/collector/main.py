@@ -48,12 +48,13 @@ def validate_telemetry(data):
 def fetch_inverter_data():
     """Synchronously fetch data from the inverter."""
     client = GivEnergyClient(host=INVERTER_IP)
-    data = client.update()
+    client.refresh_plant(full_refresh=True)
+    inverter = client.plant.inverter
     return {
-        'p_pv_start': data.p_pv(0),
-        'p_battery': data.p_battery,
-        'p_grid_out': data.p_grid_out,
-        'soc': data.soc
+        'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
+        'p_battery': inverter.p_battery,
+        'p_grid_out': inverter.p_grid_out,
+        'soc': inverter.battery_percent
     }
 
 async def main():
