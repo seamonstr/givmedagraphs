@@ -76,10 +76,11 @@ async def main():
             if validate_telemetry(telemetry):
                 influx_data = f'inverter p_pv_start={telemetry["p_pv_start"]},p_battery={telemetry["p_battery"]},p_grid_out={telemetry["p_grid_out"]},soc={telemetry["soc"]}'
                 await write_to_influx(write_api, influx_data)
+                logger.info("Wrote data to influx: %s", influx_data)
             else:
                 logger.warning("Discarded invalid telemetry data")
         except Exception as e:
-            logger.error(f"Modbus communication error: {e}")
+            logger.exception(f"💀 Modbus communication error: {e}")
 
         await asyncio.sleep(5)
 
