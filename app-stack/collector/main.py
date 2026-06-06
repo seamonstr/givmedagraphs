@@ -57,7 +57,8 @@ async def main():
 
     while True:
         try:
-            async with GivEnergyClient(host=INVERTER_IP) as client:
+            client = GivEnergyClient(host=INVERTER_IP)
+            try:
                 data = await client.async_update()
                 telemetry = {
                     'p_pv_start': data.p_pv(0),
@@ -71,7 +72,8 @@ async def main():
                     await write_to_influx(write_api, influx_data)
                 else:
                     logger.warning("Discarded invalid telemetry data")
-
+            finally:
+                await client.async_close()
         except Exception as e:
             logger.error(f"Modbus communication error: {e}")
         
