@@ -17,7 +17,7 @@ services:
       - solar-net
 
   influxdb:
-    image: influxdb:2.7
+    image: docker.io/library/influxdb:2.7
     volumes:
       - influxdb-data:/var/lib/influxdb2
     environment:
@@ -33,7 +33,7 @@ services:
       - solar-net
 
   grafana:
-    image: grafana/grafana-oss:latest
+    image: docker.io/grafana/grafana-oss:latest
     volumes:
       - grafana-data:/var/lib/grafana
     environment:
