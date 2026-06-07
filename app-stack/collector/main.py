@@ -1,8 +1,8 @@
+import asyncio
 import os
 import time
 import logging
 from givenergy_modbus.client.client import Client
-from givenergy_modbus.model.plant import Plant
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
@@ -42,18 +42,22 @@ def validate_telemetry(data):
             return False
     return True
 
-def fetch_inverter_data():
+async def fetch_inverter_data():
     """Fetch data from the inverter."""
-    plant = Plant(number_batteries=1)
     client = Client(INVERTER_IP, INVERTER_PORT)
-    client.refresh_plant(plant=plant, full_refresh=True)
-    inverter = plant.inverter
-    return {
-        'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
-        'p_battery': inverter.p_battery,
-        'p_grid_out': inverter.p_grid_out,
-        'soc': inverter.battery_percent
-    }
+    await client.connect()
+    try:
+        await client.detect()
+        await client.refresh_plant(full_refresh=True)
+        inverter = client.plant.inverter
+        return {
+            'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
+            'p_battery': inverter.p_battery,
+            'p_grid_out': inverter.p_grid_out,
+            'soc': inverter.battery_percent
+        }
+    finally:
+        await client.close()
 
 def main():
     """Main loop for polling inverter and writing to InfluxDB."""
@@ -66,7 +70,7 @@ def main():
 
     while True:
         try:
-            telemetry = fetch_inverter_data()
+            telemetry = asyncio.run(fetch_inverter_data())
 
             if validate_telemetry(telemetry):
                 influx_data = f'inverter p_pv_start={telemetry["p_pv_start"]},p_battery={telemetry["p_battery"]},p_grid_out={telemetry["p_grid_out"]},soc={telemetry["soc"]}'
