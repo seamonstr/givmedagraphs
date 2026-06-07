@@ -1,7 +1,8 @@
 import asyncio
 import os
 import logging
-from givenergy_modbus.client import GivEnergyClient
+from givenergy_modbus.client.client import Client
+from givenergy_modbus.model.plant import Plant
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import ASYNCHRONOUS
 
@@ -45,11 +46,12 @@ def validate_telemetry(data):
             return False
     return True
 
-def fetch_inverter_data():
-    """Synchronously fetch data from the inverter."""
-    client = GivEnergyClient(host=INVERTER_IP)
-    client.refresh_plant(full_refresh=True)
-    inverter = client.plant.inverter
+async def fetch_inverter_data():
+    """Asynchronously fetch data from the inverter."""
+    plant = Plant(number_batteries=1)
+    async with Client(INVERTER_IP) as client:
+        await client.refresh_plant(plant, full_refresh=True)
+    inverter = plant.inverter
     return {
         'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
         'p_battery': inverter.p_battery,
@@ -67,12 +69,9 @@ async def main():
     )
     write_api = influx_client.write_api(write_options=ASYNCHRONOUS)
 
-    loop = asyncio.get_event_loop()
-
     while True:
         try:
-            # Run synchronous inverter fetch in a thread executor to avoid blocking
-            telemetry = await loop.run_in_executor(None, fetch_inverter_data)
+            telemetry = await fetch_inverter_data()
 
             if validate_telemetry(telemetry):
                 influx_data = f'inverter p_pv_start={telemetry["p_pv_start"]},p_battery={telemetry["p_battery"]},p_grid_out={telemetry["p_grid_out"]},soc={telemetry["soc"]}'
