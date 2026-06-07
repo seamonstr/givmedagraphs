@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Load configuration from environment
 INVERTER_IP = os.getenv('INVERTER_IP', '192.168.1.100')
+INVERTER_PORT = int(os.getenv('INVERTER_PORT', '8899'))
 INFLUX_URL = os.getenv('INFLUX_URL', 'http://influxdb:8086')
 INFLUX_TOKEN = os.getenv('INFLUX_TOKEN', '')
 INFLUX_ORG = os.getenv('INFLUX_ORG', 'solar')
@@ -49,7 +50,7 @@ def validate_telemetry(data):
 async def fetch_inverter_data():
     """Asynchronously fetch data from the inverter."""
     plant = Plant(number_batteries=1)
-    async with Client(INVERTER_IP) as client:
+    async with Client(INVERTER_IP, INVERTER_PORT) as client:
         await client.refresh_plant(plant, full_refresh=True)
     inverter = plant.inverter
     return {
