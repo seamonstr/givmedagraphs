@@ -46,7 +46,7 @@ def fetch_inverter_data():
     """Fetch data from the inverter."""
     plant = Plant(number_batteries=1)
     client = Client(INVERTER_IP, INVERTER_PORT)
-    client.refresh_plant(plant, full_refresh=True)
+    client.refresh_plant(plant=plant, full_refresh=True)
     inverter = plant.inverter
     return {
         'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
