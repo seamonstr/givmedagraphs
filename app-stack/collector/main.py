@@ -1,10 +1,10 @@
-import asyncio
 import os
+import time
 import logging
 from givenergy_modbus.client.client import Client
 from givenergy_modbus.model.plant import Plant
 from influxdb_client import InfluxDBClient
-from influxdb_client.client.write_api import ASYNCHRONOUS
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,15 +26,10 @@ FIELD_THRESHOLDS = {
     'soc': 0
 }
 
-async def write_to_influx(write_api, data):
+def write_to_influx(write_api, data):
     """Write validated telemetry data to InfluxDB."""
     try:
-        await write_api.write(
-            INFLUX_BUCKET,
-            INFLUX_ORG,
-            data,
-            write_precision='s'
-        )
+        write_api.write(INFLUX_BUCKET, INFLUX_ORG, data, write_precision='s')
         logger.info("Data written to InfluxDB")
     except Exception as e:
         logger.error(f"InfluxDB write error: {e}")
@@ -47,11 +42,11 @@ def validate_telemetry(data):
             return False
     return True
 
-async def fetch_inverter_data():
-    """Asynchronously fetch data from the inverter."""
+def fetch_inverter_data():
+    """Fetch data from the inverter."""
     plant = Plant(number_batteries=1)
-    async with Client(INVERTER_IP, INVERTER_PORT) as client:
-        await client.refresh_plant(plant, full_refresh=True)
+    client = Client(INVERTER_IP, INVERTER_PORT)
+    client.refresh_plant(plant, full_refresh=True)
     inverter = plant.inverter
     return {
         'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
@@ -60,30 +55,29 @@ async def fetch_inverter_data():
         'soc': inverter.battery_percent
     }
 
-async def main():
-    """Main async loop for polling inverter and writing to InfluxDB."""
-    # Setup InfluxDB client
+def main():
+    """Main loop for polling inverter and writing to InfluxDB."""
     influx_client = InfluxDBClient(
         url=INFLUX_URL,
         token=INFLUX_TOKEN,
         org=INFLUX_ORG
     )
-    write_api = influx_client.write_api(write_options=ASYNCHRONOUS)
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
 
     while True:
         try:
-            telemetry = await fetch_inverter_data()
+            telemetry = fetch_inverter_data()
 
             if validate_telemetry(telemetry):
                 influx_data = f'inverter p_pv_start={telemetry["p_pv_start"]},p_battery={telemetry["p_battery"]},p_grid_out={telemetry["p_grid_out"]},soc={telemetry["soc"]}'
-                await write_to_influx(write_api, influx_data)
+                write_to_influx(write_api, influx_data)
                 logger.info("Wrote data to influx: %s", influx_data)
             else:
                 logger.warning("Discarded invalid telemetry data")
         except Exception as e:
             logger.exception(f"💀 Modbus communication error: {e}")
 
-        await asyncio.sleep(5)
+        time.sleep(5)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
