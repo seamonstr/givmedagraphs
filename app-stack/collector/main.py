@@ -51,12 +51,7 @@ async def fetch_inverter_data():
         await client.refresh_plant(full_refresh=True)
         inverter = client.plant.inverter
         logger.info(f"Inverter fields: {inverter.__fields__.keys()}")
-        return {
-            'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
-            'p_battery': inverter.p_battery,
-            'p_grid_out': inverter.p_grid_out,
-            'soc': inverter.battery_soc
-        }
+        return inverter
     finally:
         await client.close()
 
@@ -71,7 +66,14 @@ def main():
 
     while True:
         try:
-            telemetry = asyncio.run(fetch_inverter_data())
+            inverter = asyncio.run(fetch_inverter_data())
+            telemetry = {
+                'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
+                'p_battery': inverter.p_battery,
+                'p_grid_out': inverter.p_grid_out,
+                'battery_soc': inverter.battery_soc
+            }
+
 
             if validate_telemetry(telemetry):
                 influx_data = f'inverter p_pv_start={telemetry["p_pv_start"]},p_battery={telemetry["p_battery"]},p_grid_out={telemetry["p_grid_out"]},soc={telemetry["soc"]}'
