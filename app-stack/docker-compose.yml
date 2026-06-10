@@ -41,6 +41,9 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_INFLUX_TOKEN: ${INFLUX_TOKEN}
+      GF_INFLUX_ORG: ${INFLUX_ORG}
+      GF_INFLUX_BUCKET: ${INFLUX_BUCKET}
     ports:
       - "3000:3000"
     depends_on:
