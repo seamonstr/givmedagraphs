@@ -23,7 +23,7 @@
               { "id": "max", "value": 100 },
               { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
               { "id": "custom.fillOpacity", "value": 0 },
-              { "id": "custom.lineWidth", "value": 2 }
+              { "id": "custom.lineWidth", "value": 1 }
             ]
           },
           {
@@ -36,7 +36,7 @@
               { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } },
               { "id": "custom.fillOpacity", "value": 20 },
               { "id": "custom.fillBelowTo", "value": "0" },
-              { "id": "custom.lineWidth", "value": 2 }
+              { "id": "custom.lineWidth", "value": 1 }
             ]
           }
         ]
@@ -80,7 +80,7 @@
             "properties": [
               { "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } },
               { "id": "custom.drawStyle", "value": "line" },
-              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineWidth", "value": 1 },
               { "id": "custom.fillOpacity", "value": 0 },
               { "id": "custom.stacking", "value": { "mode": "none", "group": "house" } }
             ]
@@ -90,7 +90,7 @@
             "properties": [
               { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
               { "id": "custom.drawStyle", "value": "line" },
-              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.lineWidth", "value": 1 },
               { "id": "custom.fillOpacity", "value": 0 },
               { "id": "custom.stacking", "value": { "mode": "none", "group": "house" } }
             ]
