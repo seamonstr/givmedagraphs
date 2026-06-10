@@ -50,11 +50,12 @@ async def fetch_inverter_data():
         await client.detect()
         await client.refresh_plant(full_refresh=True)
         inverter = client.plant.inverter
+        logger.info(f"Inverter fields: {inverter.__fields__.keys()}")
         return {
             'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
             'p_battery': inverter.p_battery,
             'p_grid_out': inverter.p_grid_out,
-            'soc': inverter.battery_percent
+            'soc': inverter.battery_soc
         }
     finally:
         await client.close()
