@@ -4,14 +4,15 @@ datasources:
   - name: InfluxDB
     uid: InfluxDB
     type: influxdb
+    orgId: 1
     access: proxy
     url: http://influxdb:8086
     jsonData:
       version: Flux
-      organization: $GF_INFLUX_ORG
-      defaultBucket: $GF_INFLUX_BUCKET
+      organization: myorg
+      defaultBucket: mybucket
       tlsSkipVerify: true
     secureJsonData:
-      token: $GF_INFLUX_TOKEN
+      token: mytoken
     isDefault: true
-    editable: false
+    editable: true
