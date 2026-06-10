@@ -5,5 +5,5 @@ providers:
     folder: Solar
     type: file
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: /etc/grafana/provisioning/dashboards/json
       foldersFromFilesStructure: false
