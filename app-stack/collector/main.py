@@ -3,7 +3,7 @@ import os
 import time
 import logging
 from givenergy_modbus.client.client import Client
-from influxdb_client import InfluxDBClient
+from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 # Configure logging
@@ -18,29 +18,18 @@ INFLUX_TOKEN = os.getenv('INFLUX_TOKEN', '')
 INFLUX_ORG = os.getenv('INFLUX_ORG', 'solar')
 INFLUX_BUCKET = os.getenv('INFLUX_BUCKET', 'solar_metrics')
 
-# Field validation thresholds
-FIELD_THRESHOLDS = {
-    'p_pv_start': 0,
-    'p_battery': 0,
-    'p_grid_out': 0,
-    'soc': 0
-}
 
-def write_to_influx(write_api, data):
-    """Write validated telemetry data to InfluxDB."""
+def write_to_influx(write_api, telemetry):
+    """Write telemetry data to InfluxDB using the Point API."""
     try:
-        write_api.write(INFLUX_BUCKET, INFLUX_ORG, data, write_precision='s')
-        logger.info("Data written to InfluxDB")
+        point = Point("inverter")
+        for key, value in telemetry.items():
+            point = point.field(key, value)
+        write_api.write(INFLUX_BUCKET, INFLUX_ORG, point, write_precision='s')
+        logger.info("Data written to InfluxDB: %s", telemetry)
     except Exception as e:
         logger.error(f"InfluxDB write error: {e}")
 
-def validate_telemetry(data):
-    """Discard telemetry spikes with sudden 0 values."""
-    for field, threshold in FIELD_THRESHOLDS.items():
-        if field in data and data[field] <= threshold:
-            logger.warning(f"Invalid {field} value: {data[field]}")
-            return False
-    return True
 
 async def fetch_inverter_data():
     """Fetch data from the inverter."""
@@ -55,6 +44,7 @@ async def fetch_inverter_data():
     finally:
         await client.close()
 
+
 def main():
     """Main loop for polling inverter and writing to InfluxDB."""
     influx_client = InfluxDBClient(
@@ -68,23 +58,30 @@ def main():
         try:
             inverter = asyncio.run(fetch_inverter_data())
             telemetry = {
-                'p_pv_start': inverter.p_pv1 + inverter.p_pv2,
+                'p_pv1': inverter.p_pv1,
+                'p_pv2': inverter.p_pv2,
+                'p_pv_combined': inverter.p_pv1 + inverter.p_pv2,
                 'p_battery': inverter.p_battery,
                 'p_grid_out': inverter.p_grid_out,
-                'battery_soc': inverter.battery_soc
+                'p_load_demand': inverter.p_load_demand,
+                'battery_soc': inverter.battery_soc,
+                'v_battery': inverter.v_battery,
+                'i_battery': inverter.i_battery,
+                'v_pv1': inverter.v_pv1,
+                'v_pv2': inverter.v_pv2,
+                'v_ac1': inverter.v_ac1,
+                'f_ac1': inverter.f_ac1,
+                't_inverter_heatsink': inverter.t_inverter_heatsink,
+                'e_pv_generation_today': inverter.e_pv_generation_today,
+                'e_grid_out_day': inverter.e_grid_out_day,
+                'e_grid_in_day': inverter.e_grid_in_day,
             }
-
-
-            if validate_telemetry(telemetry):
-                influx_data = f'inverter p_pv_start={telemetry["p_pv_start"]},p_battery={telemetry["p_battery"]},p_grid_out={telemetry["p_grid_out"]},soc={telemetry["soc"]}'
-                write_to_influx(write_api, influx_data)
-                logger.info("Wrote data to influx: %s", influx_data)
-            else:
-                logger.warning("Discarded invalid telemetry data")
+            write_to_influx(write_api, telemetry)
         except Exception as e:
             logger.exception(f"💀 Modbus communication error: {e}")
 
         time.sleep(5)
+
 
 if __name__ == "__main__":
     main()
