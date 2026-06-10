@@ -37,11 +37,14 @@ services:
     image: docker.io/grafana/grafana-oss:latest
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
     ports:
       - "3000:3000"
+    depends_on:
+      - influxdb
 
 volumes:
   influxdb-data:
