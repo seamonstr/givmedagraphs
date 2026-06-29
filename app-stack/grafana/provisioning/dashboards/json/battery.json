@@ -104,32 +104,23 @@
         "defaults": {
           "unit": "watt",
           "custom": {
-            "drawStyle": "bars",
-            "barAlignment": 0,
-            "fillOpacity": 80,
-            "lineWidth": 0,
-            "stacking": { "mode": "normal", "group": "house" }
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "stacking": { "mode": "none" }
           }
         },
         "overrides": [
           {
             "matcher": { "id": "byName", "options": "PV Generation (W)" },
             "properties": [
-              { "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } },
-              { "id": "custom.drawStyle", "value": "line" },
-              { "id": "custom.lineWidth", "value": 1 },
-              { "id": "custom.fillOpacity", "value": 0 },
-              { "id": "custom.stacking", "value": { "mode": "none", "group": "house" } }
+              { "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }
             ]
           },
           {
             "matcher": { "id": "byName", "options": "Power to Grid (W)" },
             "properties": [
-              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
-              { "id": "custom.drawStyle", "value": "line" },
-              { "id": "custom.lineWidth", "value": 1 },
-              { "id": "custom.fillOpacity", "value": 0 },
-              { "id": "custom.stacking", "value": { "mode": "none", "group": "house" } }
+              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }
             ]
           },
           {
