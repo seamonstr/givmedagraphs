@@ -112,7 +112,7 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "p_combined_generation" },
+            "matcher": { "id": "byName", "options": "p_pv_combined" },
             "properties": [
               { "id": "displayName", "value": "PV Generation (W)" },
               { "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }
@@ -141,7 +141,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "InfluxDB" },
-          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_combined_generation\")",
+          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_pv_combined\")",
           "refId": "A"
         },
         {
