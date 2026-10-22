@@ -1,15 +1,8 @@
 version: '3.8'
 
-# This block enables complete Docker network compatibility mode 
-# inside Podman, bypassing all manual network file creation.
-x-podman:
-  default_net_behavior_compat: true
-
 services:
   collector:
-    build:
-      context: ./collector
-      dockerfile: Containerfile
+    image: ${REGISTRY:?REGISTRY must be set in .env}/givmedagraphs/collector:latest
     environment:
       INVERTER_IP: ${INVERTER_IP}
       INFLUX_URL: http://influxdb:8086
@@ -20,7 +13,7 @@ services:
       - influxdb
 
   influxdb:
-    image: docker.io/library/influxdb:2.7
+    image: ${REGISTRY:?REGISTRY must be set in .env}/library/influxdb:latest
     volumes:
       - influxdb-data:/var/lib/influxdb2
     environment:
@@ -34,13 +27,14 @@ services:
       - "8086:8086"
 
   grafana:
-    image: docker.io/grafana/grafana-oss:latest
+    image: ${REGISTRY:?REGISTRY must be set in .env}/grafana/grafana-oss:latest
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/json/battery.json
       GF_INFLUX_TOKEN: ${INFLUX_TOKEN}
       GF_INFLUX_ORG: ${INFLUX_ORG}
       GF_INFLUX_BUCKET: ${INFLUX_BUCKET}
