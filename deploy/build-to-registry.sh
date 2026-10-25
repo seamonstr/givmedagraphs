@@ -2,14 +2,15 @@
 set -euo pipefail
 
 # Runs locally to:
-#   1. start a docker registry on an ephemeral host port (reusing it if already running)
+#   1. start a docker registry on host port 5000 (reusing it if already running)
 #   2. copy the latest grafana and influxdb images from the public registry into it
 #   3. build the collector image and push it to it, tagged "latest"
 #
 # The registry container is left running afterwards so a target machine can pull from it,
-# e.g.:  ./startup.sh --deploy --registry http://<this-host>:<port>
+# e.g.:  ./startup.sh --deploy --registry http://<this-host>:5000
 
 REGISTRY_NAME="givmedagraphs-registry"
+REGISTRY_PORT=5000
 REGISTRY_IMAGE="docker.io/library/registry:2"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,7 +38,7 @@ Options:
                       talks to the registry via localhost. Default: localhost.
   -h, --help          Show this help.
 
-On success the last line of output is: REGISTRY_URL=http://<advertise-host>:<port>
+On success the last line of output is: REGISTRY_URL=http://<advertise-host>:5000
 EOF
 }
 
@@ -108,21 +109,17 @@ registry_port() {
     docker port "$REGISTRY_NAME" 5000/tcp | head -n1 | sed 's/.*://'
 }
 
-if [[ "$(docker inspect -f '{{.State.Running}}' "$REGISTRY_NAME" 2>/dev/null || true)" == "true" ]]; then
-    echo "♻️ Registry $REGISTRY_NAME is already running."
+if [[ "$(docker inspect -f '{{.State.Running}}' "$REGISTRY_NAME" 2>/dev/null || true)" == "true" \
+      && "$(registry_port)" == "$REGISTRY_PORT" ]]; then
+    echo "♻️ Registry $REGISTRY_NAME is already running on port $REGISTRY_PORT."
 else
-    # Remove any stopped leftover so the name is free.
+    # Remove any stopped or differently-mapped leftover so the name is free.
     docker rm -f "$REGISTRY_NAME" > /dev/null 2>&1 || true
-    echo "🗄️ Starting registry $REGISTRY_NAME on an ephemeral port..."
-    # Publishing only the container port makes docker pick a free host port.
-    docker run -d --name "$REGISTRY_NAME" -p 5000 "$REGISTRY_IMAGE" > /dev/null
+    echo "🗄️ Starting registry $REGISTRY_NAME on port $REGISTRY_PORT..."
+    docker run -d --name "$REGISTRY_NAME" -p "$REGISTRY_PORT:5000" "$REGISTRY_IMAGE" > /dev/null
 fi
 
-PORT="$(registry_port)"
-if [[ -z "$PORT" ]]; then
-    echo "Error: could not determine the registry's host port" >&2
-    exit 1
-fi
+PORT="$REGISTRY_PORT"
 # docker treats localhost registries as insecure by default, so plain http works here.
 REGISTRY="localhost:$PORT"
 
@@ -147,7 +144,10 @@ for entry in "${MIRRORED_IMAGES[@]}"; do
     docker pull "${PLATFORM_ARGS[@]}" "$SRC"
     docker tag "$SRC" "$DEST"
     echo "⬆️ Pushing $DEST..."
-    docker push "$DEST"
+    # Push the requested platform explicitly: with the containerd image store a
+    # tag may also hold other platforms (e.g. a previously pulled amd64 image),
+    # and a plain push can then publish the wrong architecture.
+    docker push "${PLATFORM_ARGS[@]}" "$DEST"
 done
 
 # ---- 3. Build and push the collector ----

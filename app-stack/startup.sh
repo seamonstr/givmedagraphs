@@ -68,7 +68,7 @@ if [[ "$DEPLOY" == true && -z "$REGISTRY_URL" ]]; then
     exit 1
 fi
 
-# docker-compose reads .env from the project directory, so always run from here.
+# docker compose reads .env from the project directory, so always run from here.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_PATH="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
 cd "$SCRIPT_DIR"
@@ -139,10 +139,10 @@ PY
     echo "REGISTRY=$REGISTRY_HOST" >> "$ENV_FILE"
 
     echo "🗑️ Removing old containers..."
-    docker-compose down --remove-orphans
+    docker compose down --remove-orphans
 
     echo "⬇️ Pulling latest images from $REGISTRY_HOST..."
-    docker-compose pull
+    docker compose pull
 
     UNIT_NAME="givmedagraphs.service"
     UNIT_PATH="/etc/systemd/system/$UNIT_NAME"
@@ -161,7 +161,7 @@ RemainAfterExit=yes
 User=$RUN_USER
 WorkingDirectory=$SCRIPT_DIR
 ExecStart=$SCRIPT_PATH
-ExecStop=/usr/bin/env docker-compose down
+ExecStop=/usr/bin/env docker compose down
 
 [Install]
 WantedBy=multi-user.target
@@ -174,10 +174,10 @@ EOF
 else
     # Not in deploy mode means just start the services
     echo "✂️ Removing old containers..."
-    docker-compose down --remove-orphans
+    docker compose down --remove-orphans
 
     echo "🚀 Starting services..."
-    docker-compose up -d
+    docker compose up -d
 fi
 
 

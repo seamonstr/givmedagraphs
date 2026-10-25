@@ -51,9 +51,9 @@ deploy/
 
 ## Requirements
 
-- Docker with `docker-compose` (v1 syntax), `curl`, and `bash`.
+- Docker with the `docker compose` plugin (v2), `curl`, and `bash`.
 - Network access to the inverter on port 8899.
-- For Pi deployment: `ssh <pi-host>` works without a password prompt, the Pi has Docker and `docker-compose`, and your user there has `sudo`.
+- For Pi deployment: `ssh <pi-host>` works without a password prompt, the Pi has Docker and the `docker compose` plugin, and your user there has `sudo`.
 
 ## Configuration
 
@@ -78,14 +78,14 @@ Settings live in `app-stack/.env`:
 ./deploy/run-local.sh
 ```
 
-This starts a local registry (on a random port, left running afterwards), mirrors the InfluxDB and Grafana images into it, builds the collector image, and then runs `app-stack/startup.sh`. `startup.sh` removes any existing containers and starts the stack again, so running it repeatedly is safe.
+This starts a local registry (on port 5000, left running afterwards), mirrors the InfluxDB and Grafana images into it, builds the collector image, and then runs `app-stack/startup.sh`. `startup.sh` removes any existing containers and starts the stack again, so running it repeatedly is safe.
 
 Then open:
 
 - Grafana: http://localhost:3000 (`GRAFANA_USER` / `GRAFANA_PASSWORD`)
 - InfluxDB: http://localhost:8086 (`INFLUX_USER` / `INFLUX_PASSWORD`)
 
-Because the registry port changes, `docker-compose` commands run by hand need `REGISTRY` set, for example `REGISTRY=localhost:<port> docker-compose ps`. Find the port with `docker ps`. Plain `docker logs app-stack_collector_1` works without it.
+`docker compose` commands run by hand need `REGISTRY` set, for example `REGISTRY=localhost:5000 docker compose ps`. Plain `docker logs app-stack-collector-1` works without it.
 
 ## Deploying to a Raspberry Pi
 
@@ -110,7 +110,7 @@ Your machine must stay reachable, with the registry container running, while the
 - `grafana/grafana-oss:latest`
 - `givmedagraphs/collector:latest`
 
-It prints `REGISTRY_URL=http://<host>:<port>` as its last line, which the other scripts use.
+It prints `REGISTRY_URL=http://<host>:5000` as its last line, which the other scripts use.
 
 `build-to-registry.sh` options:
 
