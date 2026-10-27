@@ -12,7 +12,7 @@ inverter (Modbus, port 8899) ──> collector ──> InfluxDB ──> Grafana
 | :--- | :--- | :--- | :--- |
 | `collector` | built from `app-stack/collector` | – | Python daemon. Polls the inverter every 5 seconds and writes an `inverter` measurement to InfluxDB. |
 | `influxdb` | `influxdb:latest` (v2) | 8086 | Time-series storage. |
-| `grafana` | `grafana-oss:latest` | 3000 | Dashboards. The InfluxDB datasource and the Battery dashboard are provisioned automatically. |
+| `grafana` | `grafana-oss:latest` | 80 | Dashboards. The InfluxDB datasource and the Battery dashboard are provisioned automatically. |
 
 All images are pulled from a registry set by `REGISTRY` (see [Deployment model](#deployment-model)).
 
@@ -82,7 +82,7 @@ This starts a local registry (on port 5000, left running afterwards), mirrors th
 
 Then open:
 
-- Grafana: http://localhost:3000 (`GRAFANA_USER` / `GRAFANA_PASSWORD`)
+- Grafana: http://localhost (`GRAFANA_USER` / `GRAFANA_PASSWORD`)
 - InfluxDB: http://localhost:8086 (`INFLUX_USER` / `INFLUX_PASSWORD`)
 
 `docker compose` commands run by hand need `REGISTRY` set, for example `REGISTRY=localhost:5000 docker compose ps`. Plain `docker logs app-stack-collector-1` works without it.

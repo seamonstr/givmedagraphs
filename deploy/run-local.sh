@@ -20,7 +20,7 @@ Usage: $(basename "$0")
 Builds all images into a local registry, then starts the app stack from it.
 Accessible afterwards at:
   InfluxDB: http://localhost:8086
-  Grafana:  http://localhost:3000
+  Grafana:  http://localhost
 EOF
 }
 
@@ -62,4 +62,4 @@ cd "$APP_DIR"
 
 echo "✅ Stack is up:"
 echo "   InfluxDB: http://localhost:8086"
-echo "   Grafana:  http://localhost:3000"
+echo "   Grafana:  http://localhost"
