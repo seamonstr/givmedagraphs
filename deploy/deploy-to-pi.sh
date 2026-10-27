@@ -17,7 +17,7 @@ APP_DIR="$REPO_ROOT/app-stack"
 REMOTE_DIR="givmedagraphs"
 
 # Files/directories from app-stack/ that the Pi needs.
-DEPLOY_FILES=(grafana .env docker-compose.yml startup.sh)
+DEPLOY_FILES=(grafana nginx .env docker-compose.yml startup.sh)
 
 usage() {
     cat <<EOF
@@ -94,7 +94,7 @@ echo "📦 Registry: $REGISTRY_URL"
 echo "📤 Copying app-stack files to $PI:$REMOTE_DIR ..."
 # tar over ssh keeps the executable bit and lets us replace grafana/ cleanly (removing
 # files that no longer exist) instead of nesting a copy inside the old directory.
-ssh "$PI" "mkdir -p '$REMOTE_DIR' && rm -rf '$REMOTE_DIR/grafana'"
+ssh "$PI" "mkdir -p '$REMOTE_DIR' && rm -rf '$REMOTE_DIR/grafana' '$REMOTE_DIR/nginx'"
 tar -C "$APP_DIR" -cf - "${DEPLOY_FILES[@]}" | ssh "$PI" "tar -C '$REMOTE_DIR' -xf -"
 ssh "$PI" "chmod 600 '$REMOTE_DIR/.env' && chmod +x '$REMOTE_DIR/startup.sh'"
 

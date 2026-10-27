@@ -12,7 +12,8 @@ inverter (Modbus, port 8899) ──> collector ──> InfluxDB ──> Grafana
 | :--- | :--- | :--- | :--- |
 | `collector` | built from `app-stack/collector` | – | Python daemon. Polls the inverter every 5 seconds and writes an `inverter` measurement to InfluxDB. |
 | `influxdb` | `influxdb:latest` (v2) | 8086 | Time-series storage. |
-| `grafana` | `grafana-oss:latest` | 80 | Dashboards. The InfluxDB datasource and the Battery dashboard are provisioned automatically. |
+| `grafana` | `grafana-oss:latest` | – (internal 3000) | Dashboards. The InfluxDB datasource and the Battery dashboard are provisioned automatically. Read-only and login-free. |
+| `nginx` | `nginx:alpine` | 80 | Reverse proxy in front of Grafana. Redirects `/` to the kiosk view of the Battery dashboard. |
 
 All images are pulled from a registry set by `REGISTRY` (see [Deployment model](#deployment-model)).
 
@@ -21,6 +22,17 @@ All images are pulled from a registry set by `REGISTRY` (see [Deployment model](
 `p_pv1`, `p_pv2`, `p_pv_combined`, `p_battery`, `p_grid_out`, `p_load_demand`, `battery_soc`, `v_battery`, `i_battery`, `v_pv1`, `v_pv2`, `v_ac1`, `f_ac1`, `t_inverter_heatsink`, `e_pv_generation_today`, `e_grid_out_day`, `e_grid_in_day`.
 
 `app-stack/collector/fields.md` documents the full set of fields the inverter exposes.
+
+### Kiosk mode
+
+Kiosk mode is the only mode. The root URL (`http://<host>/`) redirects to the Battery dashboard with no sidebar or top bar (`/d/battery/battery?orgId=1&kiosk`).
+
+- Everyone is an anonymous, read-only *Viewer*, and the login form is disabled.
+- The dashboard is non-editable and provisioned with `allowUiUpdates: false`.
+- Grafana's own port is not published. It is reached only through the `nginx` proxy (`app-stack/nginx/default.conf`).
+- To change the graphs, edit `battery.json` and redeploy.
+
+The Grafana admin account still exists internally (`GRAFANA_USER` / `GRAFANA_PASSWORD`), but there is no way to log in over the network.
 
 ### Dashboard
 
@@ -36,10 +48,11 @@ The **Battery** dashboard is in the *Solar* folder and is also Grafana's home pa
 
 ```
 app-stack/
-├── docker-compose.yml        # the three services
+├── docker-compose.yml        # the four services
 ├── startup.sh                # start (or, with --deploy, install) the stack
 ├── .env                      # configuration (see below)
 ├── collector/                # Containerfile, main.py, requirements.txt, fields.md
+├── nginx/default.conf        # proxy: / -> kiosk dashboard
 └── grafana/provisioning/     # datasource + dashboard provisioning
     ├── datasources/influxdb.yml
     └── dashboards/{dashboards.yml, json/battery.json}
@@ -78,11 +91,11 @@ Settings live in `app-stack/.env`:
 ./deploy/run-local.sh
 ```
 
-This starts a local registry (on port 5000, left running afterwards), mirrors the InfluxDB and Grafana images into it, builds the collector image, and then runs `app-stack/startup.sh`. `startup.sh` removes any existing containers and starts the stack again, so running it repeatedly is safe.
+This starts a local registry (on port 5000, left running afterwards), mirrors the InfluxDB, Grafana and nginx images into it, builds the collector image, and then runs `app-stack/startup.sh`. `startup.sh` removes any existing containers and starts the stack again, so running it repeatedly is safe.
 
 Then open:
 
-- Grafana: http://localhost (`GRAFANA_USER` / `GRAFANA_PASSWORD`)
+- Dashboard (kiosk, no login): http://localhost
 - InfluxDB: http://localhost:8086 (`INFLUX_USER` / `INFLUX_PASSWORD`)
 
 `docker compose` commands run by hand need `REGISTRY` set, for example `REGISTRY=localhost:5000 docker compose ps`. Plain `docker logs app-stack-collector-1` works without it.
@@ -97,7 +110,7 @@ This script:
 
 1. Works out the address the Pi uses to reach your machine.
 2. Runs `build-to-registry.sh --platform pi` to build and mirror linux/arm64 images into the local registry.
-3. Copies `grafana/`, `.env`, `docker-compose.yml` and `startup.sh` to `~/givmedagraphs` on the Pi.
+3. Copies `grafana/`, `nginx/`, `.env`, `docker-compose.yml` and `startup.sh` to `~/givmedagraphs` on the Pi.
 4. Runs `startup.sh --deploy --registry http://<your-host>:<port>` on the Pi. That adds the registry to Docker's `insecure-registries` (restarting Docker if the config changed), records `REGISTRY` in `.env`, pulls the images, and installs and starts a `givmedagraphs.service` systemd unit so the stack starts at boot.
 
 Your machine must stay reachable, with the registry container running, while the Pi pulls images.
@@ -108,6 +121,7 @@ Your machine must stay reachable, with the registry container running, while the
 
 - `library/influxdb:latest`
 - `grafana/grafana-oss:latest`
+- `library/nginx:alpine`
 - `givmedagraphs/collector:latest`
 
 It prints `REGISTRY_URL=http://<host>:5000` as its last line, which the other scripts use.

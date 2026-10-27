@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Runs locally to:
 #   1. start a docker registry on host port 5000 (reusing it if already running)
-#   2. copy the latest grafana and influxdb images from the public registry into it
+#   2. copy the latest grafana, influxdb and nginx images from the public registry into it
 #   3. build the collector image and push it to it, tagged "latest"
 #
 # The registry container is left running afterwards so a target machine can pull from it,
@@ -21,6 +21,7 @@ COLLECTOR_DIR="$REPO_ROOT/app-stack/collector"
 MIRRORED_IMAGES=(
     "docker.io/library/influxdb:latest|library/influxdb:latest"
     "docker.io/grafana/grafana-oss:latest|grafana/grafana-oss:latest"
+    "docker.io/library/nginx:alpine|library/nginx:alpine"
 )
 COLLECTOR_IMAGE_PATH="givmedagraphs/collector:latest"
 

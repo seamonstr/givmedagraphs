@@ -1,6 +1,7 @@
 {
   "title": "Battery",
   "uid": "battery",
+  "editable": false,
   "schemaVersion": 38,
   "version": 1,
   "refresh": "5s",
@@ -59,8 +60,19 @@
           {
             "matcher": { "id": "byName", "options": "p_grid_out" },
             "properties": [
-              { "id": "displayName", "value": "Power to Grid (W)" },
-              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
+              { "id": "displayName", "value": "Grid Power (W) (+export / -import)" },
+              { "id": "color", "value": { "mode": "thresholds" } },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "green", "value": 0 }
+                  ]
+                }
+              },
+              { "id": "custom.gradientMode", "value": "scheme" },
               { "id": "custom.fillOpacity", "value": 0 },
               { "id": "custom.lineWidth", "value": 1 }
             ]
@@ -83,27 +95,27 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "InfluxDB" },
-          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"battery_soc\")",
+          "query": "stepNs = if int(v: v.windowPeriod) > 5000000000 then int(v: v.windowPeriod) else 5000000000\nstep = duration(v: stepNs)\n\nfrom(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"battery_soc\")\n  |> aggregateWindow(every: step, fn: mean, createEmpty: false)",
           "refId": "A"
         },
         {
           "datasource": { "type": "influxdb", "uid": "InfluxDB" },
-          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_battery\")\n  |> timedMovingAverage(every: 5s, period: 90s)",
+          "query": "stepNs = if int(v: v.windowPeriod) > 5000000000 then int(v: v.windowPeriod) else 5000000000\nstep = duration(v: stepNs)\nsmooth = duration(v: if stepNs > 90000000000 then stepNs else 90000000000)\n\nfrom(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_battery\")\n  |> timedMovingAverage(every: step, period: smooth)",
           "refId": "B"
         },
         {
           "datasource": { "type": "influxdb", "uid": "InfluxDB" },
-          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_pv_combined\")\n  |> timedMovingAverage(every: 5s, period: 90s)",
+          "query": "stepNs = if int(v: v.windowPeriod) > 5000000000 then int(v: v.windowPeriod) else 5000000000\nstep = duration(v: stepNs)\nsmooth = duration(v: if stepNs > 90000000000 then stepNs else 90000000000)\n\nfrom(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_pv_combined\")\n  |> timedMovingAverage(every: step, period: smooth)",
           "refId": "C"
         },
         {
           "datasource": { "type": "influxdb", "uid": "InfluxDB" },
-          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_grid_out\")\n  |> timedMovingAverage(every: 5s, period: 90s)",
+          "query": "stepNs = if int(v: v.windowPeriod) > 5000000000 then int(v: v.windowPeriod) else 5000000000\nstep = duration(v: stepNs)\nsmooth = duration(v: if stepNs > 90000000000 then stepNs else 90000000000)\n\nfrom(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_grid_out\")\n  |> timedMovingAverage(every: step, period: smooth)",
           "refId": "D"
         },
         {
           "datasource": { "type": "influxdb", "uid": "InfluxDB" },
-          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_load_demand\")\n  |> timedMovingAverage(every: 5s, period: 90s)",
+          "query": "stepNs = if int(v: v.windowPeriod) > 5000000000 then int(v: v.windowPeriod) else 5000000000\nstep = duration(v: stepNs)\nsmooth = duration(v: if stepNs > 90000000000 then stepNs else 90000000000)\n\nfrom(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"inverter\")\n  |> filter(fn: (r) => r._field == \"p_load_demand\")\n  |> timedMovingAverage(every: step, period: smooth)",
           "refId": "E"
         }
       ],
@@ -118,13 +130,11 @@
           "unit": "percent",
           "min": 0,
           "max": 100,
+          "color": { "mode": "fixed", "fixedColor": "blue" },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "orange", "value": 20 },
-              { "color": "yellow", "value": 40 },
-              { "color": "green", "value": 60 }
+              { "color": "blue", "value": null }
             ]
           }
         },
@@ -153,11 +163,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
+          "color": { "mode": "fixed", "fixedColor": "yellow" },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "blue", "value": null },
-              { "color": "yellow", "value": 1 }
+              { "color": "yellow", "value": null }
             ]
           }
         },
@@ -188,11 +198,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
+          "color": { "mode": "fixed", "fixedColor": "blue" },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 0 }
+              { "color": "blue", "value": null }
             ]
           }
         },
@@ -223,12 +233,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
+          "color": { "mode": "fixed", "fixedColor": "white" },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 1500 },
-              { "color": "red", "value": 3000 }
+              { "color": "white", "value": null }
             ]
           }
         },
@@ -267,7 +276,7 @@
         "defaults": {
           "unit": "kwatth",
           "decimals": 2,
-          "color": { "mode": "fixed", "fixedColor": "orange" }
+          "color": { "mode": "fixed", "fixedColor": "white" }
         },
         "overrides": []
       },
@@ -327,7 +336,7 @@
         "defaults": {
           "unit": "kwatth",
           "decimals": 2,
-          "color": { "mode": "fixed", "fixedColor": "red" }
+          "color": { "mode": "fixed", "fixedColor": "green" }
         },
         "overrides": []
       },
@@ -387,7 +396,7 @@
         "defaults": {
           "unit": "currencyGBP",
           "decimals": 2,
-          "color": { "mode": "fixed", "fixedColor": "green" }
+          "color": { "mode": "fixed", "fixedColor": "red" }
         },
         "overrides": []
       },
@@ -417,7 +426,7 @@
         "defaults": {
           "unit": "currencyGBP",
           "decimals": 2,
-          "color": { "mode": "fixed", "fixedColor": "blue" }
+          "color": { "mode": "fixed", "fixedColor": "green" }
         },
         "overrides": []
       },

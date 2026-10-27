@@ -4,6 +4,8 @@ providers:
   - name: Default
     folder: Solar
     type: file
+    disableDeletion: true
+    allowUiUpdates: false
     options:
       path: /etc/grafana/provisioning/dashboards/json
       foldersFromFilesStructure: false
